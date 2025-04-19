@@ -25,15 +25,15 @@ func (t Time) cmp(other Time) int {
 	return cmp.Compare(t.hour*60+t.min, other.hour*60+other.min)
 }
 
+func (t Time) toHour() float64 {
+	return float64(t.min)/60 + float64(t.hour)
+}
+
 func (t Time) fromstr(str1 string, str2 string) Time {
 	hour, err := strconv.Atoi(str1)
-	if err != nil {
-		fmt.Println("error reading hour value")
-	}
+	check(err)
 	min, err := strconv.Atoi(str2)
-	if err != nil {
-		fmt.Println("error reading hour value")
-	}
+	check(err)
 	return Time{hour, min}
 }
 
@@ -50,9 +50,7 @@ func (m Measurement) fromstr(strs []string) Measurement {
 	var time Time
 	time = Time.fromstr(time, strs[0], strs[1])
 	speed, err := strconv.Atoi(strs[2])
-	if err != nil {
-		fmt.Println("error converting string to measurement")
-	}
+	check(err)
 	return Measurement{time, speed}
 }
 
@@ -75,7 +73,22 @@ func (c Car) print() {
 }
 
 func (c Car) toString() string {
-	return fmt.Sprintf("Car: %s, Measurements: %d, Number: %d\n", c.lp, len(c.data), c.idx)
+	return fmt.Sprintf("Car: %s, Measurements: %d, Number: %d", c.lp, len(c.data), c.idx)
+}
+
+func f6(car Car) {
+	//fmt.Printf("f6 called on %s\n", car.lp)
+	dst := 0.0
+	last_time := car.data[0].time
+	last_speed := 0
+	for _, meas := range car.data {
+		timediff := (meas.time.toHour() - last_time.toHour())
+		diff := float64(last_speed) * timediff
+		dst += diff
+		fmt.Printf("%s %.1f\n", meas.time.toString(), dst)
+		last_speed = meas.speed
+		last_time = meas.time
+	}
 }
 
 func parseLine(idx *int, line string, cars *[]Car) {
@@ -149,7 +162,7 @@ func main() {
 		}
 	}
 
-	fmt.Printf("legutolsó jeladás: %s, %s", max_time.toString(), max_time_lp)
+	fmt.Printf("legutolsó jeladás: %s, %s\n", max_time.toString(), max_time_lp)
 
 	fmt.Println("\n3. feladat")
 	for _, car := range cars {
@@ -159,7 +172,20 @@ func main() {
 	}
 
 	fmt.Println("\n4. feladat")
-	//TODO user input...
+	fmt.Printf("Adjon meg egy időpontot: (formátum: hh:mm)\n")
+	var input_time Time
+	fmt.Scanf("%d:%d\n", &input_time.hour, &input_time.min)
+	//fmt.Printf("Time read: %s\n", input_time.toString())
+	counter := 0
+	for _, car := range cars {
+		for _, meas := range car.data {
+			if meas.time == input_time {
+				counter++
+				//fmt.Printf("Match found: %s %s\n", car.lp, meas.toString())
+			}
+		}
+	}
+	fmt.Printf("Ebben az időpontban %d db jeladás történt.\n", counter)
 
 	fmt.Println("\n5. feladat")
 	max_speed := 0
@@ -181,8 +207,19 @@ func main() {
 		fmt.Printf("%v ", str)
 	}
 
-	fmt.Println("\n6. feladat")
+	fmt.Println("\n\n6. feladat")
 	//TODO user input...
+	var input_lp string
+	fmt.Println("Adjon meg egy rendszámot: ")
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input_lp = strings.ToUpper(scanner.Text())
+	//fmt.Printf("scanned lp: %s\n", input_lp)
+	for _, car := range cars {
+		if car.lp == input_lp {
+			f6(car)
+		}
+	}
 
 	fmt.Println("\n7. feladat")
 	//TODO file write...
