@@ -130,6 +130,7 @@ func main() {
 	for fscanner.Scan() {
 		flines = append(flines, fscanner.Text())
 	}
+	f.Close()
 
 	cars := []Car{}
 	measurement_num := 0
@@ -208,7 +209,6 @@ func main() {
 	}
 
 	fmt.Println("\n\n6. feladat")
-	//TODO user input...
 	var input_lp string
 	fmt.Println("Adjon meg egy rendszámot: ")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -222,5 +222,18 @@ func main() {
 	}
 
 	fmt.Println("\n7. feladat")
-	//TODO file write...
+
+	wf, err := os.OpenFile("ido.txt", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	check(err)
+	defer wf.Close()
+
+	fwriter := bufio.NewWriter(wf)
+	var out_str string
+
+	for _, car := range cars {
+		out_str = fmt.Sprintf("%s %d %d %d %d\n", car.lp, car.data[0].time.hour, car.data[0].time.min, car.data[len(car.data)-1].time.hour, car.data[len(car.data)-1].time.min)
+		fwriter.WriteString(out_str)
+	}
+	fwriter.Flush()
+	wf.Close()
 }
